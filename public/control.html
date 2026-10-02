@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>课堂互动 · 教师控制端</title>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/control.css">
+</head>
+<body>
+<canvas id="fx-canvas"></canvas>
+<div class="grid-deco"></div>
+
+<!-- ============ 建课堂 / 入口 ============ -->
+<div id="gate" class="gate">
+  <div class="gate-card card anim-fade-up">
+    <div class="gate-logo">课</div>
+    <h1 class="grad-text">课堂实时互动系统</h1>
+    <p class="gate-sub">手机扫码参与 · 大屏实时呈现 · 让每一次举手都被看见</p>
+
+    <div class="gate-form">
+      <label class="field">
+        <span>课堂名称</span>
+        <input id="gate-title" placeholder="例：数据整理与清洗实训 · 第 1 讲" value="数据整理与清洗实训 · 第 1 讲">
+      </label>
+      <div class="gate-row">
+        <label class="field">
+          <span>座位排数</span>
+          <input id="gate-rows" type="number" value="6" min="2" max="12">
+        </label>
+        <label class="field">
+          <span>每排座位数</span>
+          <input id="gate-cols" type="number" value="8" min="4" max="16">
+        </label>
+        <label class="field">
+          <span>前排定义（前 N 排）</span>
+          <input id="gate-front" type="number" value="2" min="1" max="4">
+        </label>
+        <label class="field">
+          <span>教师口令（6 位数字，留空自动生成）</span>
+          <input id="gate-pass" inputmode="numeric" maxlength="6" placeholder="留空自动生成">
+        </label>
+      </div>
+      <button class="btn btn-primary btn-lg btn-block" id="gate-create">🚀 创建课堂</button>
+      <div class="gate-join">
+        <span>已有课堂码？</span>
+        <input id="gate-code" placeholder="输入 6 位课堂码" maxlength="6" style="text-transform:uppercase">
+        <input id="gate-pass-enter" placeholder="教师口令（本机登录过可留空）" maxlength="6" inputmode="numeric">
+        <button class="btn" id="gate-enter">进入</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 控制台 ============ -->
+<div id="console" class="console hidden">
+
+  <header class="c-top">
+    <div class="c-brand">
+      <div class="c-logo">课</div>
+      <div>
+        <h1 id="c-title">课堂互动</h1>
+        <div class="c-sub"><span class="dot-live"></span><span id="c-status">运行中</span></div>
+      </div>
+    </div>
+
+    <div class="c-room">
+      <div class="c-qr"><img id="c-qr" alt="扫码"></div>
+      <div class="c-room-txt">
+        <b id="c-code">------</b>
+        <span>学生扫码参与</span>
+      </div>
+    </div>
+
+    <div class="c-stats">
+      <div class="c-stat"><b id="c-online">0</b><span>在线</span></div>
+      <div class="c-stat"><b id="c-seated">0</b><span>已选座</span></div>
+      <div class="c-stat"><b id="c-front">0%</b><span>前排率</span></div>
+      <div class="c-stat"><b id="c-hands">0</b><span>举手</span></div>
+    </div>
+
+    <div class="c-actions">
+      <button class="btn btn-primary" id="btn-wall">📺 打开大屏</button>
+      <button class="btn" id="btn-copy">🔗 复制参与链接</button>
+      <button class="btn" id="btn-export">📥 导出积分</button>
+      <button class="btn btn-ghost" id="btn-sfx" title="开关音效">🔊</button>
+      <button class="btn btn-ghost" id="btn-help" title="快捷键">?</button>
+    </div>
+  </header>
+
+  <div class="c-body">
+
+    <!-- 左：功能菜单 -->
+    <nav class="c-nav">
+      <button class="nav-i active" data-tab="poll"><i>📊</i><span>投票 / 小测</span></button>
+      <button class="nav-i" data-tab="bank"><i>📚</i><span>互动题库</span></button>
+      <button class="nav-i" data-tab="word"><i>💬</i><span>词云 / 弹幕</span></button>
+      <button class="nav-i" data-tab="wheel"><i>🎯</i><span>提问转盘</span></button>
+      <button class="nav-i" data-tab="buzz"><i>⚡</i><span>抢答</span></button>
+      <button class="nav-i" data-tab="seat"><i>💺</i><span>座位与签到</span></button>
+      <button class="nav-i" data-tab="group"><i>👥</i><span>随机分组</span></button>
+      <button class="nav-i" data-tab="timer"><i>⏱</i><span>计时器</span></button>
+      <button class="nav-i" data-tab="fx"><i>🎉</i><span>特效与提示</span></button>
+      <button class="nav-i" data-tab="students"><i>🎓</i><span>学生与积分</span></button>
+      <button class="nav-i" data-tab="settings"><i>⚙</i><span>设置</span></button>
+    </nav>
+
+    <!-- 中：功能面板 -->
+    <section class="c-main">
+
+      <!-- 投票 -->
+      <div class="tab-pane active" data-pane="poll">
+        <div class="pane-head"><h2>📊 发布投票 / 随堂小测</h2><span class="hint">实时柱状图会同步到大屏</span></div>
+
+        <label class="field">
+          <span>题目</span>
+          <input id="p-question" placeholder="例：下面哪一项不属于数据清洗的步骤？">
+        </label>
+
+        <div class="pane-row">
+          <label class="field" style="width:180px">
+            <span>题型</span>
+            <select id="p-format">
+              <option value="choice">选择题</option>
+              <option value="judge">判断题</option>
+              <option value="text">简答题</option>
+            </select>
+          </label>
+          <span class="hint" id="p-format-hint" style="align-self:center"></span>
+        </div>
+
+        <div class="pane-row">
+          <label class="field" style="flex:1" id="p-only-choice">
+            <span>选项（每行一个，最多 8 项）</span>
+            <textarea id="p-options" placeholder="缺失值处理&#10;重复值删除&#10;数据可视化&#10;格式统一">缺失值处理
+重复值删除
+数据可视化
+格式统一</textarea>
+          </label>
+          <div style="width:250px">
+            <label class="field" id="p-only-correct">
+              <span>正确答案（可选，用于小测）</span>
+              <select id="p-correct"><option value="">不设正确答案</option></select>
+            </label>
+            <label class="field hidden" id="p-only-answer">
+              <span>参考答案（公布答案时显示）</span>
+              <input id="p-answer" placeholder="例：先处理缺失值，再看分布">
+            </label>
+            <label class="field" id="p-only-multi">
+              <span>模式</span>
+              <select id="p-multi">
+                <option value="0">单选投票</option>
+                <option value="1">多选投票</option>
+              </select>
+            </label>
+            <div class="btn-row">
+              <button class="btn btn-primary btn-block" id="p-start">发布</button>
+              <button class="btn btn-block" id="p-pause">⏸ 暂停</button>
+              <button class="btn btn-block" id="p-stop">结束</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="live-box" id="p-live">
+          <div class="live-head"><b>实时结果</b><span id="p-count">0 / 0</span></div>
+          <div class="mini-bars" id="p-bars"></div>
+          <div class="btn-row" style="margin-top:12px">
+            <button class="btn" id="p-reveal">✅ 公布答案</button>
+            <button class="btn" id="p-resend">🔄 重新推送</button>
+          </div>
+        </div>
+
+        <div class="quick-tpl">
+          <b>常用模板：</b>
+          <button class="chip" data-tpl="yn">是 / 否</button>
+          <button class="chip" data-tpl="understand">听懂了吗</button>
+          <button class="chip" data-tpl="speed">语速合适吗</button>
+          <button class="chip" data-tpl="abcd">A/B/C/D 四选一</button>
+        </div>
+      </div>
+
+      <!-- 题库 -->
+      <div class="tab-pane" data-pane="bank">
+        <div class="pane-head"><h2>📚 互动题库</h2><span class="hint">课前把题目录好，课堂上点一下就发布</span></div>
+
+        <div class="pane-row">
+          <label class="field" style="width:150px">
+            <span>题目类型</span>
+            <select id="qb-type">
+              <option value="poll">投票</option>
+              <option value="quiz">小测</option>
+              <option value="word">词云 / 弹幕</option>
+              <option value="buzz">抢答</option>
+            </select>
+          </label>
+          <label class="field" style="width:150px" id="qb-only-format">
+            <span>题型</span>
+            <select id="qb-format">
+              <option value="choice">选择题</option>
+              <option value="judge">判断题</option>
+              <option value="text">简答题</option>
+            </select>
+          </label>
+          <label class="field" style="flex:1">
+            <span>题目 / 提示语</span>
+            <input id="qb-question" placeholder="例：下面哪一项不属于数据清洗的步骤？">
+          </label>
+        </div>
+
+        <!-- 选项 / 答案区：投票、小测、抢答都可能有（抢答题也能存答案了），只有词云/弹幕没有 -->
+        <div id="qb-only-poll">
+          <label class="field" id="qb-only-options">
+            <span>选项（每行一个，最多 8 项）</span>
+            <textarea id="qb-options" placeholder="缺失值处理&#10;重复值删除&#10;数据可视化&#10;格式统一"></textarea>
+          </label>
+          <div class="pane-row">
+            <label class="field" style="width:220px" id="qb-only-correct">
+              <span>正确答案</span>
+              <select id="qb-correct"><option value="">不设正确答案</option></select>
+            </label>
+            <label class="field hidden" id="qb-only-answer" style="flex:1">
+              <span>参考答案（公布答案时显示）</span>
+              <input id="qb-answer" placeholder="例：数据选项卡 → 删除重复值">
+            </label>
+            <label class="sw" style="align-self:flex-end;margin-bottom:14px" id="qb-only-multi">
+              <input type="checkbox" id="qb-multi"><span>可多选</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="qb-add">➕ 加入题库</button>
+          <button class="btn btn-ghost" id="qb-clear">清空题库</button>
+          <span class="sep"></span>
+          <button class="btn btn-ghost" id="qb-import">📥 导入题库</button>
+          <button class="btn btn-ghost" id="qb-export">📤 导出题库</button>
+          <input type="file" id="qb-import-file" accept="application/json,.json" hidden>
+          <span class="hint" id="qb-count" style="align-self:center"></span>
+        </div>
+
+        <div class="qb-list" id="qb-list"></div>
+
+        <div class="tip-box">
+          💡 <b>课堂上怎么用：</b>在题目上点 <b>发布</b> 就直接推给全班并开始，
+          不用现场手打题目。题库随课堂一起保存，下次上课还在。
+        </div>
+      </div>
+
+      <!-- 词云 -->
+      <div class="tab-pane" data-pane="word">
+        <div class="pane-head"><h2>💬 词云 / 弹幕</h2><span class="hint">相同的词会越变越大，弹幕实时飞入大屏</span></div>
+        <label class="field">
+          <span>提示语</span>
+          <input id="w-prompt" placeholder="例：用一个词形容你眼中的数据清洗" value="用一个词形容你眼中的数据清洗">
+        </label>
+        <label class="field">
+          <span>呈现方式</span>
+          <select id="w-mode">
+            <option value="both">词云 + 弹幕（推荐）</option>
+            <option value="cloud">仅词云</option>
+            <option value="danmaku">仅弹幕</option>
+          </select>
+        </label>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="w-start">开始收集</button>
+          <button class="btn" id="w-pause">⏸ 暂停</button>
+          <button class="btn" id="w-stop">结束</button>
+          <button class="btn btn-ghost" id="w-clear">清空</button>
+        </div>
+        <div class="live-box">
+          <div class="live-head"><b>已收集</b><span id="w-count">0 条</span></div>
+          <div class="word-chips" id="w-chips"></div>
+          <p class="hint">点任意词条可从大屏撤下并屏蔽，之后同样内容会被自动拒绝。</p>
+        </div>
+      </div>
+
+      <!-- 转盘 -->
+      <div class="tab-pane" data-pane="wheel">
+        <div class="pane-head"><h2>🎯 提问大转盘</h2><span class="hint">随机点名，转出的人可加分</span></div>
+        <div class="pane-row">
+          <label class="field" style="flex:1">
+            <span>标题</span>
+            <input id="wh-title" value="今天谁来回答？">
+          </label>
+          <label class="field" style="width:220px">
+            <span>候选池</span>
+            <select id="wh-pool">
+              <option value="online">全部在线同学</option>
+              <option value="hands">仅举手同学</option>
+              <option value="front">仅前排同学（鼓励前排）</option>
+              <option value="back">优先后两排（点名更公平）</option>
+            </select>
+          </label>
+          <label class="field" style="width:150px">
+            <span>人数</span>
+            <input id="wh-count" type="number" value="8" min="2" max="12">
+          </label>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-lg" id="wh-spin">🎡 开始转动</button>
+          <button class="btn" id="wh-refresh">🔄 换一批</button>
+          <button class="btn" id="wh-close">关闭转盘</button>
+        </div>
+        <div class="wheel-result-box" id="wh-result">
+          <div class="wr-big" id="wh-avatar">🎯</div>
+          <div class="wh-text">
+            <b id="wh-name">尚未开始</b>
+            <span id="wh-seat">点击「开始转动」随机抽取一位同学</span>
+            <!-- 2026-09-04：转盘抽中人不自动加分，老师点这里的按钮走 wheel:award。
+                 默认 delta 从设置里取；自定义按钮把当前 setting 替换为输入值。 -->
+            <div class="wh-award" id="wh-award" hidden>
+              <button class="bz-btn ok" id="wh-award-ok">答对 <span id="wh-award-ok-n">+0</span></button>
+              <button class="bz-btn ng" id="wh-award-ng">答错 <span id="wh-award-ng-n">+0</span></button>
+              <button class="bz-btn zero" id="wh-award-zero">0 分</button>
+              <label class="field" style="margin-left:8px">
+                <span>自定义</span>
+                <input id="wh-award-custom" type="number" placeholder="0" step="1" style="width:70px">
+              </label>
+              <button class="bz-btn" id="wh-award-go">按此加分</button>
+            </div>
+          </div>
+        </div>
+        <div class="cand-list" id="wh-cands"></div>
+        <div class="tip-box">
+          💡 <b>鼓励前排小技巧：</b>把候选池设为「仅前排同学」，坐前排的同学被点到的概率变成 100%。
+        </div>
+      </div>
+
+      <!-- 抢答 -->
+      <div class="tab-pane" data-pane="buzz">
+        <div class="pane-head"><h2>⚡ 抢答</h2><span class="hint" id="b-score-hint">前三名分别 +5 / +3 / +1 分</span></div>
+        <label class="field">
+          <span>抢答题目 / 提示</span>
+          <input id="b-prompt" placeholder="例：Excel 中删除重复值在哪个选项卡？" value="准备好了吗？">
+        </label>
+        <div class="pane-row">
+          <label class="field" style="width:180px">
+            <span>题型</span>
+            <select id="b-format">
+              <option value="text">简答题</option>
+              <option value="choice">选择题</option>
+              <option value="judge">判断题</option>
+            </select>
+          </label>
+          <span class="hint" style="align-self:center">同学只抢不答；题目和答案会挂在大屏上，你判定完再决定要不要公布</span>
+        </div>
+        <label class="field hidden" id="b-only-choice">
+          <span>选项（每行一个，最多 8 项）</span>
+          <textarea id="b-options" placeholder="数据选项卡&#10;开始选项卡&#10;公式选项卡"></textarea>
+        </label>
+        <div class="pane-row">
+          <label class="field hidden" id="b-only-correct" style="width:220px">
+            <span>正确答案</span>
+            <select id="b-correct"><option value="">不设正确答案</option></select>
+          </label>
+          <label class="field" id="b-only-answer" style="flex:1">
+            <span>参考答案（公布答案时显示）</span>
+            <input id="b-answer" placeholder="例：数据选项卡 → 删除重复值">
+          </label>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-lg" id="b-start">🔔 开始抢答</button>
+          <button class="btn" id="b-pause">⏸ 暂停</button>
+          <button class="btn" id="b-reset">重置</button>
+          <button class="btn" id="b-stop">结束</button>
+          <button class="btn" id="b-reveal">✅ 公布答案</button>
+        </div>
+        <div class="buzz-list" id="b-list"></div>
+      </div>
+
+      <!-- 座位 -->
+      <div class="tab-pane" data-pane="seat">
+        <div class="pane-head"><h2>💺 座位与签到</h2><span class="hint">学生在手机上选座，前排自动加分</span></div>
+        <div class="pane-row">
+          <label class="field" style="width:150px"><span>排数</span><input id="s-rows" type="number" value="6" min="2" max="12"></label>
+          <label class="field" style="width:150px"><span>每排座位</span><input id="s-cols" type="number" value="8" min="4" max="16"></label>
+          <label class="field" style="width:180px"><span>前排定义</span><input id="s-front" type="number" value="2" min="1" max="4"></label>
+          <button class="btn" id="s-apply" style="align-self:flex-end;margin-bottom:14px">应用</button>
+        </div>
+        <div class="seat-preview" id="s-preview"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="s-show">📺 大屏显示座位图</button>
+          <!-- 按钮里的分值由 JS 按设置填充，不写死，免得改了设置按钮文案还对不上 -->
+          <button class="btn" id="s-reward">🏅 给前排同学加分 +2</button>
+        </div>
+        <div class="front-rank">
+          <b>前排就坐率</b>
+          <div class="fr-bar"><i id="fr-fill"></i></div>
+          <span id="fr-text">0% （0 / 0）</span>
+        </div>
+      </div>
+
+      <!-- 分组 -->
+      <div class="tab-pane" data-pane="group">
+        <div class="pane-head"><h2>👥 随机分组</h2><span class="hint">一键分组并推送到大屏和手机</span></div>
+        <div class="pane-row">
+          <label class="field" style="width:180px"><span>分成几组</span><input id="g-count" type="number" value="6" min="2" max="12"></label>
+          <label class="field" style="width:220px">
+            <span>分组方式</span>
+            <select id="g-mode">
+              <option value="random">完全随机</option>
+              <option value="front">前排优先均分</option>
+            </select>
+          </label>
+          <div class="btn-row" style="align-self:flex-end;margin-bottom:14px">
+            <button class="btn btn-primary" id="g-make">🎲 分组</button>
+            <button class="btn" id="g-show">📺 投屏</button>
+            <button class="btn btn-ghost" id="g-clear">清空</button>
+          </div>
+        </div>
+        <div class="group-preview" id="g-preview"></div>
+      </div>
+
+      <!-- 计时器 -->
+      <div class="tab-pane" data-pane="timer">
+        <div class="pane-head"><h2>⏱ 计时器</h2><span class="hint">常驻大屏底栏，不影响其他活动</span></div>
+        <div class="timer-big" id="t-display">00:00</div>
+        <div class="quick-times">
+          <button class="btn" data-sec="60">1 分钟</button>
+          <button class="btn" data-sec="180">3 分钟</button>
+          <button class="btn" data-sec="300">5 分钟</button>
+          <button class="btn" data-sec="600">10 分钟</button>
+          <button class="btn" data-sec="30">30 秒</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="t-start">开始</button>
+          <button class="btn" id="t-pause">暂停</button>
+          <button class="btn" id="t-resume">继续</button>
+          <button class="btn btn-ghost" id="t-reset">归零</button>
+        </div>
+        <label class="field" style="max-width:220px;margin-top:18px">
+          <span>自定义秒数</span>
+          <input id="t-custom" type="number" value="120" min="5" max="3600">
+        </label>
+      </div>
+
+      <!-- 特效 -->
+      <div class="tab-pane" data-pane="fx">
+        <div class="pane-head"><h2>🎉 特效与提示</h2><span class="hint">活跃气氛用，慎用</span></div>
+        <div class="fx-grid">
+          <button class="fx-btn" data-fx="celebrate" data-text="太棒了">🎉 太棒了</button>
+          <button class="fx-btn" data-fx="celebrate" data-text="答对了">✅ 答对了</button>
+          <button class="fx-btn" data-fx="cool" data-text="开始">🚀 开始</button>
+          <button class="fx-btn" data-fx="cool" data-text="休息一下">☕ 休息一下</button>
+          <button class="fx-btn" data-fx="celebrate" data-text="下课">🔔 下课</button>
+          <button class="fx-btn" data-fx="timeup" data-text="时间到">⏰ 时间到</button>
+        </div>
+        <label class="field" style="margin-top:22px">
+          <span>自定义大屏文字</span>
+          <input id="fx-text" placeholder="输入要炸裂显示的文字">
+        </label>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="fx-send">发送特效</button>
+          <button class="btn" id="fx-msg">设为底栏提示语</button>
+        </div>
+        <div class="view-switch">
+          <b>大屏视图切换：</b>
+          <button class="chip" data-view="idle">待机二维码</button>
+          <button class="chip" data-view="seat">座位图</button>
+          <button class="chip" data-view="group">分组</button>
+        </div>
+      </div>
+
+      <!-- 学生 -->
+      <div class="tab-pane" data-pane="students">
+        <div class="pane-head">
+          <h2>🎓 学生与积分</h2>
+          <div class="btn-row">
+            <button class="btn" id="st-refresh">刷新</button>
+            <button class="btn" id="st-reward-all">全员 +1</button>
+            <button class="btn btn-primary" id="st-export">导出 CSV</button>
+          </div>
+        </div>
+        <div class="st-toolbar">
+          <input id="st-search" placeholder="搜索昵称…" style="max-width:240px">
+          <select id="st-filter" style="max-width:180px">
+            <option value="all">全部</option>
+            <option value="online">仅在线</option>
+            <option value="front">仅前排</option>
+            <option value="hand">仅举手</option>
+          </select>
+          <span class="chip" id="st-total">0 人</span>
+        </div>
+        <div class="st-table" id="st-table"></div>
+      </div>
+
+      <!-- 设置 -->
+      <div class="tab-pane" data-pane="settings">
+        <div class="pane-head"><h2>⚙ 设置</h2></div>
+        <label class="field"><span>课堂名称</span><input id="set-title"></label>
+        <label class="field" style="max-width:260px">
+          <span>教师口令（用于换设备进入控制端，6 位数字）</span>
+          <div class="pass-row">
+            <input id="set-pass" inputmode="numeric" maxlength="6" placeholder="当前口令" readonly>
+            <button class="btn" id="set-pass-edit">修改</button>
+            <button class="btn btn-ghost" id="set-pass-copy" title="复制口令">📋</button>
+          </div>
+        </label>
+        <div class="set-grid">
+          <label class="sw"><input type="checkbox" id="set-danmaku" checked><span>允许弹幕</span></label>
+          <label class="sw"><input type="checkbox" id="set-cheer" checked><span>允许喝彩</span></label>
+          <label class="sw"><input type="checkbox" id="set-buzz" checked><span>允许抢答</span></label>
+          <label class="sw"><input type="checkbox" id="set-multivote"><span>投票可多选</span></label>
+        </div>
+        <div class="pane-row">
+          <label class="field" style="max-width:200px">
+            <span>单条内容最大字数</span>
+            <input id="set-maxlen" type="number" value="20" min="4" max="60">
+          </label>
+          <label class="field" style="max-width:200px">
+            <span>前排就坐加分</span>
+            <input id="set-score-front" type="number" value="3" min="0" max="20">
+          </label>
+          <label class="field" style="max-width:200px">
+            <span>前排奖励加分（手动按钮）</span>
+            <input id="set-score-reward" type="number" value="2" min="0" max="20">
+          </label>
+          <label class="field" style="max-width:200px">
+            <span>后排算几排</span>
+            <input id="set-backrows" type="number" value="2" min="1" max="6">
+          </label>
+        </div>
+        <!-- 2026-09-04 新增：抢答 / 转盘的结果分值由老师判定。这四档是控制端
+             「答对/答错」按钮默认带的分值，可在此覆盖。 -->
+        <div class="pane-row" style="border-top:1px dashed var(--line); padding-top:14px; margin-top:6px">
+          <label class="field" style="max-width:200px">
+            <span>抢答答对（默认 +N）</span>
+            <input id="set-score-buzz-correct" type="number" value="5" min="0" max="20">
+          </label>
+          <label class="field" style="max-width:200px">
+            <span>抢答答错（可填负数）</span>
+            <input id="set-score-buzz-wrong" type="number" value="-2" min="-20" max="0">
+          </label>
+          <label class="field" style="max-width:200px">
+            <span>抽问答对（默认 +N）</span>
+            <input id="set-score-wheel-correct" type="number" value="3" min="0" max="20">
+          </label>
+          <label class="field" style="max-width:200px">
+            <span>抽问答错（可填负数）</span>
+            <input id="set-score-wheel-wrong" type="number" value="0" min="-20" max="0">
+          </label>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="set-save">保存设置</button>
+          <button class="btn" id="set-clearhands">清空举手</button>
+        </div>
+        <div class="tip-box" style="margin-top:24px">
+          <b>积分规则：</b><span id="score-rule-text">加入 +1 · 参与投票 +1</span>
+        </div>
+
+        <div class="danger-zone">
+          <h4>🧹 多节课管理</h4>
+          <p class="hint" id="session-now">当前是第 1 课</p>
+          <div class="btn-row">
+            <button class="btn" id="set-newsession">🆕 开始新的一课（保留名单与积分）</button>
+            <button class="btn btn-danger" id="set-reset">⚠ 清空全部数据</button>
+          </div>
+          <p class="hint">
+            「开始新的一课」会清掉上一节的活动记录、分组、举手和词云，但
+            <b>保留学生名单、累计积分和座位</b>，同学下次不用重新扫码填昵称。<br>
+            「清空全部数据」连学生和积分一起清掉，回到刚建课堂的空状态，用于换班级或新学期。
+          </p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 右：学生与实时动态 -->
+    <aside class="c-side">
+      <div class="side-card">
+        <h4>🏆 积分榜</h4>
+        <ol class="c-rank" id="c-ranklist"></ol>
+      </div>
+      <div class="side-card">
+        <h4>✋ 举手 <span class="side-badge" id="c-handcount">0</span>
+          <button class="btn btn-ghost" id="c-clearhands" style="padding:2px 8px;font-size:11px;margin-left:auto">清空</button>
+        </h4>
+        <div class="c-hands" id="c-handslist"></div>
+      </div>
+      <div class="side-card flex1">
+        <h4>📜 课堂动态</h4>
+        <div class="c-log" id="c-log"></div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- 帮助弹层 -->
+<div id="help-modal" class="modal hidden">
+  <div class="modal-card card">
+    <h3>操作指南</h3>
+    <ol>
+      <li>点击 <b>📺 打开大屏</b>，把大屏窗口拖到投影仪并按 <b>F11</b> 全屏。</li>
+      <li>把控制端页面留在你的电脑上，或直接展示二维码让扫码。</li>
+      <li>学生扫码 → 填昵称 → 选座位，大屏会实时冒出头像气泡。</li>
+      <li>在左侧选择功能发布活动，大屏自动切换呈现。</li>
+    </ol>
+    <h4>快捷键</h4>
+    <ul class="kbd-list">
+      <li><kbd>F</kbd> 大屏全屏切换</li>
+      <li><kbd>M</kbd> 大屏音效开关</li>
+      <li><kbd>1</kbd>~<kbd>9</kbd> 快速切换控制端功能面板</li>
+      <li><kbd>Space</kbd> 转盘开始 / 计时开始暂停</li>
+    </ul>
+    <button class="btn btn-primary btn-block" id="help-close">知道了</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="/js/control.js"></script>
+</body>
+</html>

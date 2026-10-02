@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>课堂互动 · 大屏</title>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/wall.css">
+</head>
+<body>
+
+<canvas id="fx-canvas"></canvas>
+<div class="grid-deco"></div>
+<canvas id="confetti-canvas"></canvas>
+<div id="danmaku-layer"></div>
+
+<div class="stage-scale" id="stage-scale">
+  <div class="wall" id="wall">
+
+    <!-- ============ 顶栏 ============ -->
+    <header class="wall-top">
+      <div class="brand">
+        <div class="brand-logo">课</div>
+        <div class="brand-txt">
+          <h1 id="w-title">课堂互动</h1>
+          <div class="brand-sub"><i class="dot-live"></i><span id="w-status">等待同学加入…</span></div>
+        </div>
+      </div>
+
+      <div class="top-stats">
+        <div class="stat"><b id="w-online">0</b><span>在线</span></div>
+        <div class="stat"><b id="w-frontrate">0<i>%</i></b><span>前排就坐</span></div>
+        <div class="stat"><b id="w-hands">0</b><span>举手</span></div>
+      </div>
+
+      <div class="qrbox">
+        <div class="qr-wrap"><img id="w-qr" alt="扫码参与"></div>
+        <div class="qr-txt"><b id="w-code">------</b><span>扫码参与</span></div>
+      </div>
+    </header>
+
+    <!-- ============ 主舞台 ============ -->
+    <main class="wall-stage">
+
+      <!-- 待机 -->
+      <section class="view" id="view-idle">
+        <div class="idle-wrap">
+          <div class="idle-hero">
+            <div class="idle-qr">
+              <div class="idle-qr-glow"></div>
+              <img id="w-qr-big" alt="扫码参与">
+            </div>
+            <div class="idle-info">
+              <h2 class="grad-text">手机扫码，加入课堂</h2>
+              <div class="idle-code">
+                <span>课堂码</span>
+                <b id="w-code-big">------</b>
+              </div>
+              <p class="idle-tip">微信 / 浏览器扫一扫 → 填昵称 → 选座位<br>加入后即可参与投票、弹幕、抢答</p>
+              <div class="idle-count">
+                已有 <b id="w-idle-count">0</b> 位同学就坐
+              </div>
+            </div>
+          </div>
+          <div class="idle-avatars" id="idle-avatars"></div>
+        </div>
+      </section>
+
+      <!-- 投票 / 选择题 -->
+      <section class="view" id="view-poll">
+        <div class="poll-q">
+          <span class="poll-badge" id="poll-badge">投票</span>
+          <h2 id="poll-question">—</h2>
+        </div>
+        <div id="poll-bars"></div>
+        <!-- 简答题：同学们的文字答案实名平铺（答案墙），老师点名讲评用 -->
+        <div class="ans-wall hidden" id="poll-answers"></div>
+        <!-- 公布答案后显示：选择题/判断题显示正确项文字，简答题显示参考答案 -->
+        <div class="ans-ref hidden" id="poll-answer-ref"></div>
+        <div class="poll-foot">
+          <div class="poll-progress">
+            <div class="pp-bar"><i id="pp-fill"></i></div>
+            <span id="pp-text">0 / 0 已作答</span>
+          </div>
+          <div class="poll-hint" id="poll-hint">扫码选择你的答案</div>
+        </div>
+      </section>
+
+      <!-- 词云 / 弹幕 -->
+      <section class="view" id="view-word">
+        <div class="word-prompt" id="word-prompt">—</div>
+        <div id="word-cloud"></div>
+        <div class="word-foot">
+          <div class="chip live"><i class="dot-live"></i>弹幕实时飞入</div>
+          <div class="word-count"><b id="word-count">0</b> 条 · <b id="word-people">0</b> 人参与</div>
+        </div>
+      </section>
+
+      <!-- 大转盘 -->
+      <section class="view" id="view-wheel">
+        <div class="wheel-layout">
+          <div class="wheel-left">
+            <div class="wheel-pointer">▼</div>
+            <canvas id="wheel-canvas"></canvas>
+          </div>
+          <div class="wheel-right">
+            <h3 id="wheel-title">今天谁来回答？</h3>
+            <ul class="wheel-list" id="wheel-list"></ul>
+          </div>
+        </div>
+        <div class="wheel-result" id="wheel-result">
+          <div class="wr-avatar" id="wr-avatar">🎉</div>
+          <div class="wr-name" id="wr-name">—</div>
+          <div class="wr-sub" id="wr-sub">请起立回答</div>
+        </div>
+      </section>
+
+      <!-- 座位图 -->
+      <section class="view" id="view-seat">
+        <div class="seat-head">
+          <h2>座位热力图</h2>
+          <div class="seat-rate">
+            <div class="sr-bar"><i id="sr-fill"></i></div>
+            <span><b id="sr-num">0%</b> 的同学选择了前排</span>
+          </div>
+        </div>
+        <div id="seat-map"></div>
+        <div class="seat-foot" id="seat-cheer">前排视野好、互动多，还有额外积分哦 ✨</div>
+      </section>
+
+      <!-- 抢答 -->
+      <section class="view" id="view-buzz">
+        <h2 class="buzz-q" id="buzz-q">抢答！</h2>
+        <!-- 选择题/判断题把选项挂出来给全班看（抢答只抢不答，选项仅供展示） -->
+        <div class="buzz-opts hidden" id="buzz-options"></div>
+        <div class="buzz-podium" id="buzz-podium"></div>
+        <!-- 老师判定后可以选择公布答案 -->
+        <div class="ans-ref hidden" id="buzz-answer-ref"></div>
+      </section>
+
+      <!-- 分组 -->
+      <section class="view" id="view-group">
+        <h2 class="group-h">分组结果</h2>
+        <div class="group-grid" id="group-grid"></div>
+      </section>
+
+    </main>
+
+    <!-- ============ 侧栏 ============ -->
+    <aside class="wall-side" id="wall-side">
+      <div class="side-block">
+        <h4>🏆 积分榜</h4>
+        <ol class="rank-list" id="rank-list"></ol>
+      </div>
+      <div class="side-block" id="hands-block">
+        <h4>✋ 举手 <span id="hands-count" class="side-badge">0</span></h4>
+        <div class="hands-list" id="hands-list"></div>
+      </div>
+    </aside>
+
+    <!-- ============ 底栏 ============ -->
+    <footer class="wall-bottom">
+      <div class="wb-timer" id="wb-timer">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v5.6l4.2 2.5-1 1.7L11 13.5V7h2Z"/></svg>
+        <b id="timer-text">--:--</b>
+      </div>
+      <div class="wb-msg" id="wb-msg">教师控制端已就绪</div>
+      <div class="wb-right">
+        <span id="wb-clock">--:--</span>
+        <span class="wb-sep">·</span>
+        <span id="wb-net">连接中…</span>
+      </div>
+    </footer>
+
+  </div>
+</div>
+
+<!-- 加入气泡层 -->
+<div id="join-float"></div>
+
+<!-- 效果层 -->
+<div id="effect-layer"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="/js/wall.js"></script>
+</body>
+</html>

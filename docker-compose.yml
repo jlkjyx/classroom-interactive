@@ -1,0 +1,75 @@
+# ============================================================
+#  课堂互动系统 · Docker 编排
+# ============================================================
+#  用法（在源码目录下执行）：
+#      docker compose up -d --build
+#
+#  反向代理交给外部（WAF / 1Panel OpenResty / nginx），
+#  这个文件里不放任何域名、证书、反代配置——那些不归容器管。
+#  对外只暴露 3000 端口，回源地址填 http://服务器IP:3000。
+# ============================================================
+
+services:
+  app:
+    # 构建上下文 = 本文件所在目录（源码目录）。
+    # 本文件只给命令行本地/服务器部署用（docker compose up -d --build）。
+    # 1Panel 请用 deploy/docker/docker-compose.run.yml（先构建镜像再起）——
+    # 1Panel 创建编排时会自己预拉取 image: 声明的镜像，pull_policy 对它无效。
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: classroom-interactive:1.0.0
+
+    # 关键：没有这一行，Compose 发现本地没有 classroom-interactive:1.0.0
+    # 就会去 Docker Hub 拉这个根本不存在的镜像，报
+    #     pull access denied for classroom-interactive
+    # pull_policy: build = 这个镜像只靠本地构建，永远不去远端拉。
+    pull_policy: build
+
+    container_name: classroom-app
+    restart: unless-stopped
+
+    ports:
+      # 默认监听所有网卡，供外部 WAF / 反代回源。
+      # 若 WAF 与本项目在同一台机器上，建议改成下一行（只让本机访问），
+      # 强制所有流量都过 WAF，避免有人绕过它直接打 IP:3000：
+      #   - "127.0.0.1:3000:3000"
+      - "3000:3000"
+
+    environment:
+      PORT: "3000"
+      TZ: Asia/Shanghai
+
+      # ---- 二维码指向哪里 ----
+      # 留空 = 按请求的 X-Forwarded-Host / Host 自动推断（域名未定时可用）。
+      # 部署完请打开 https://你的域名/healthz 看 qrBase 字段——
+      # 它就是学生扫码后真正会打开的地址。若显示的不是你的 https 域名，
+      # 把这里改成 PUBLIC_BASE: "https://你的域名"，重启容器即可（无需重新构建）。
+      PUBLIC_BASE: ""
+
+      # 生产环境建议保持 1：关闭 /api/rooms 全量房间列表接口
+      DISABLE_ROOM_LIST: "1"
+
+    volumes:
+      # 必须用命名卷，不能挂 /opt/classroom-interactive/data 这类宿主目录：
+      # 容器以 node(uid 1000) 运行，宿主目录通常是 root 建的 755，
+      # 容器里建子目录会直接 EACCES，服务启动即崩。
+      # 命名卷自动继承镜像内 /app/data 的属主（node:node），开箱即用。
+      - classroom-data:/app/data
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  classroom-data:

@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log*
+data/rooms/*.json
+data/
+test/
+shots/
+deploy/
+work/
+.git
+.gitignore
+*.md
+.DS_Store
+certs/
+*.log

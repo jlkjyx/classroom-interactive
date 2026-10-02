@@ -1,0 +1,371 @@
+/* ==========================================================
+   手机端样式
+   ========================================================== */
+
+.m-bg {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(700px 500px at 15% -8%, rgba(76, 141, 255, 0.26), transparent 62%),
+    radial-gradient(600px 460px at 88% 4%, rgba(167, 139, 250, 0.22), transparent 62%),
+    radial-gradient(600px 500px at 50% 108%, rgba(34, 211, 238, 0.16), transparent 62%),
+    linear-gradient(180deg, #05081a 0%, #0a1030 52%, #060b22 100%);
+}
+
+.m-page {
+  position: fixed; inset: 0; z-index: 1;
+  display: none; flex-direction: column;
+  padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px);
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.m-page.active { display: flex; animation: fade-up 0.4s var(--ease) both; }
+
+/* ---------- 加入页 ---------- */
+.m-join-wrap { margin: auto 0; width: 100%; max-width: 420px; margin-inline: auto; text-align: center; }
+.m-logo {
+  width: 66px; height: 66px; margin: 0 auto 14px; border-radius: 20px;
+  background: var(--grad-main); display: grid; place-items: center;
+  font-size: 32px; font-weight: 900; color: #05122b; box-shadow: var(--glow-cyan);
+}
+.m-join-wrap h1 { margin: 0 0 6px; font-size: 27px; font-weight: 900; }
+.m-join-sub { margin: 0 0 26px; font-size: 14px; color: var(--text-2); }
+
+.m-avatar-pick { margin-bottom: 22px; }
+.m-avatar-big {
+  width: 96px; height: 96px; margin: 0 auto; border-radius: 50%;
+  background: var(--panel-strong); border: 2px solid var(--line);
+  display: grid; place-items: center; font-size: 52px;
+  box-shadow: 0 0 34px -6px rgba(34, 211, 238, 0.6);
+  animation: pop-in 0.45s var(--ease-bounce) both;
+}
+.m-avatar-big.change { animation: pop-in 0.4s var(--ease-bounce) both; }
+
+.m-join-wrap .field { text-align: left; }
+.m-join-wrap input { text-align: center; font-size: 17px; font-weight: 700; padding: 14px; }
+.m-tip { font-size: 12px; color: var(--text-3); margin: 14px 0 0; line-height: 1.6; }
+
+/* ---------- 通用头 ---------- */
+.m-page-head { text-align: center; margin-bottom: 20px; flex: none; }
+.m-page-head h2 { margin: 0 0 6px; font-size: 22px; font-weight: 800; }
+.m-page-head p { margin: 0; font-size: 13px; color: var(--text-2); }
+.m-page-head b { color: var(--gold); }
+
+/* ---------- 选座 ---------- */
+.m-seat-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.m-podium {
+  width: 180px; height: 34px; border-radius: 10px;
+  background: linear-gradient(180deg, rgba(76, 141, 255, 0.34), rgba(76, 141, 255, 0.1));
+  border: 1px solid rgba(76, 141, 255, 0.42);
+  display: grid; place-items: center; font-size: 13px; letter-spacing: 6px; color: #cfe0ff; font-weight: 700;
+}
+/* 座位网格按可用宽度自适应：小屏自动缩小，大屏最多到 44px 不再摊开。
+   --seat-cols 由 JS 写入，用来算最大宽度。 */
+.m-seat-grid {
+  display: grid;
+  gap: clamp(4px, 1.4vw, 7px);
+  width: 100%;
+  max-width: calc(var(--seat-cols, 8) * 52px);
+  justify-content: center;
+}
+.m-seat {
+  /* 不再写死 40px：宽度由网格等分决定，aspect-ratio 保证正方形，
+     空间不足时整体等比缩小，永远不会把首尾两列挤出屏幕。 */
+  width: 100%;
+  max-width: 44px;
+  aspect-ratio: 1;
+  height: auto;
+  justify-self: center;
+  border-radius: 11px;
+  font-size: clamp(14px, 4.4vw, 21px);
+  display: grid; place-items: center; position: relative;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.11);
+  transition: all 0.25s var(--ease);
+}
+.m-seat.front { border-color: rgba(251, 191, 36, 0.55); background: rgba(251, 191, 36, 0.1); }
+.m-seat.taken { opacity: 0.75; background: color-mix(in srgb, var(--sc, #4c8dff) 30%, transparent); border-color: var(--sc, #4c8dff); cursor: not-allowed; }
+.m-seat.mine {
+  background: linear-gradient(135deg, #22d3ee, #4c8dff); border-color: #fff;
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.7); transform: scale(1.08);
+}
+.m-seat:active:not(.taken) { transform: scale(0.92); }
+
+.m-seat-legend { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--text-3); margin-top: 16px; flex: none; }
+.m-seat-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lg { width: 15px; height: 15px; border-radius: 5px; display: inline-block; }
+.lg.front { background: rgba(251, 191, 36, 0.24); border: 1px solid rgba(251, 191, 36, 0.6); }
+.lg.taken { background: rgba(76, 141, 255, 0.42); border: 1px solid #4c8dff; }
+.lg.mine { background: linear-gradient(135deg, #22d3ee, #4c8dff); }
+
+/* ---------- 主界面顶栏 ---------- */
+.m-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-radius: 18px; margin-bottom: 16px; flex: none;
+  background: var(--panel); border: 1px solid var(--line-soft); backdrop-filter: blur(14px);
+}
+.m-top-l { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.m-av {
+  width: 42px; height: 42px; border-radius: 50%; flex: none;
+  background: rgba(255, 255, 255, 0.1); display: grid; place-items: center; font-size: 24px;
+}
+.m-top-l b { display: block; font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+.m-top-l span { font-size: 11px; color: var(--text-3); }
+.m-score { text-align: center; }
+.m-score b {
+  display: block; font-size: 26px; font-weight: 900; line-height: 1;
+  background: var(--grad-warm); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.m-score span { font-size: 10px; color: var(--text-3); }
+.m-score.bump b { animation: num-pop 0.5s var(--ease-bounce); }
+
+/* ---------- 内容区 ---------- */
+.m-content { flex: 1; min-height: 0; position: relative; }
+.m-view { display: none; animation: fade-up 0.35s var(--ease) both; }
+.m-view.active { display: block; }
+
+.m-idle-card {
+  text-align: center; padding: 44px 20px; border-radius: 22px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+}
+.m-idle-icon { font-size: 54px; animation: float-y 2.4s ease-in-out infinite; }
+.m-idle-card h3 { margin: 14px 0 8px; font-size: 20px; font-weight: 800; }
+.m-idle-card p { margin: 0; font-size: 13px; color: var(--text-3); line-height: 1.7; }
+
+.m-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.m-quick-btn {
+  padding: 18px 12px; border-radius: 18px; border: 1px solid var(--line-soft);
+  background: var(--panel); color: var(--text); font-family: var(--font);
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: all 0.22s var(--ease); cursor: pointer;
+}
+.m-quick-btn i { font-size: 30px; font-style: normal; }
+.m-quick-btn b { font-size: 15px; font-weight: 800; }
+.m-quick-btn span { font-size: 11px; color: var(--text-3); }
+.m-quick-btn:active { transform: scale(0.95); }
+.m-quick-btn.on {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.24), rgba(244, 114, 182, 0.18));
+  border-color: var(--gold); box-shadow: 0 0 24px -6px rgba(251, 191, 36, 0.7);
+}
+.m-quick-btn.disabled {
+  opacity: 0.4; filter: grayscale(0.85); pointer-events: none; cursor: not-allowed;
+}
+
+.m-rank-mini { margin-top: 18px; }
+.m-rank-mini h4 { margin: 0 0 10px; font-size: 14px; color: var(--text-2); }
+.mrm-row {
+  display: flex; align-items: center; gap: 10px; padding: 9px 13px; border-radius: 12px;
+  background: var(--panel); border: 1px solid var(--line-soft); margin-bottom: 7px; font-size: 14px;
+}
+.mrm-row.me { border-color: var(--cyan); background: rgba(34, 211, 238, 0.12); }
+.mrm-row .r { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; font-size: 11px; font-weight: 900; background: rgba(255, 255, 255, 0.12); flex: none; }
+.mrm-row .a { font-size: 19px; }
+.mrm-row .n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mrm-row .s { font-weight: 900; color: var(--gold); text-align: right; flex: none; }
+/* 本次课得分：小一号、靠在主分数下面，一眼能看出两个数谁是谁 */
+.mrm-row .s em {
+  display: block; font-style: normal; font-size: 10px; font-weight: 700;
+  color: var(--text-3); margin-top: 1px;
+}
+
+/* ---------- 投票 ---------- */
+.m-q-badge {
+  display: inline-block; padding: 5px 14px; border-radius: 99px; font-size: 12px; font-weight: 800;
+  background: var(--grad-main); color: #05122b; margin-bottom: 12px;
+}
+.m-q { font-size: 20px; font-weight: 800; line-height: 1.55; margin: 0 0 18px; }
+.m-options { display: flex; flex-direction: column; gap: 11px; }
+.m-opt {
+  display: flex; align-items: center; gap: 12px; padding: 15px 17px; border-radius: 16px;
+  border: 1px solid var(--line-soft); background: var(--panel); color: var(--text);
+  font-family: var(--font); font-size: 15px; font-weight: 600; text-align: left;
+  transition: all 0.22s var(--ease); cursor: pointer; position: relative; overflow: hidden;
+}
+.m-opt .ol {
+  width: 27px; height: 27px; border-radius: 9px; flex: none; display: grid; place-items: center;
+  background: rgba(255, 255, 255, 0.12); font-size: 13px; font-weight: 900;
+}
+.m-opt .ot { flex: 1; }
+.m-opt .oc { font-size: 13px; color: var(--text-3); font-weight: 800; }
+.m-opt:active { transform: scale(0.97); }
+.m-opt.picked {
+  border-color: var(--cyan); background: rgba(34, 211, 238, 0.16);
+  box-shadow: 0 0 24px -6px rgba(34, 211, 238, 0.8);
+}
+.m-opt.picked .ol { background: var(--grad-main); color: #05122b; }
+.m-opt.correct { border-color: var(--green); background: rgba(52, 211, 153, 0.18); }
+.m-opt.wrong { opacity: 0.5; }
+.m-opt .obar {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+  background: rgba(255, 255, 255, 0.07); transition: width 0.6s var(--ease); z-index: -1;
+}
+.m-hint { font-size: 12px; color: var(--text-3); text-align: center; margin-top: 16px; line-height: 1.7; }
+
+/* 公布答案：老师可以选择不公布，所以这块默认隐藏，revealed 时才出现 */
+.m-answer-ref {
+  margin-top: 14px; padding: 12px 16px; border-radius: 14px;
+  font-size: 14px; font-weight: 800; line-height: 1.6; text-align: center;
+  color: #062b1f; background: linear-gradient(135deg, #34d399, #10b981);
+  box-shadow: 0 8px 26px -10px rgba(16, 185, 129, 0.8);
+}
+
+/* ---------- 词云 ---------- */
+.m-word-input { display: flex; gap: 10px; margin-bottom: 14px; }
+.m-word-input input { flex: 1; font-size: 16px; padding: 14px; }
+.m-word-input .btn { padding: 0 22px; flex: none; }
+.m-word-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.m-tag {
+  padding: 7px 14px; border-radius: 99px; font-size: 13px;
+  background: rgba(255, 255, 255, 0.07); border: 1px solid var(--line-soft);
+  transition: all 0.2s var(--ease);
+}
+.m-tag:active { transform: scale(0.94); background: rgba(34, 211, 238, 0.2); }
+.m-my-words { display: flex; flex-direction: column; gap: 8px; }
+.m-mw {
+  padding: 11px 15px; border-radius: 13px; font-size: 14px;
+  background: rgba(34, 211, 238, 0.12); border: 1px solid rgba(34, 211, 238, 0.3);
+  animation: pop-in 0.4s var(--ease-bounce) both;
+}
+
+/* ---------- 抢答 ---------- */
+.m-buzz-area { text-align: center; padding-top: 10px; }
+.m-buzz-btn {
+  width: 210px; height: 210px; margin: 22px auto; border-radius: 50%;
+  border: none; cursor: pointer; font-family: var(--font);
+  background: radial-gradient(circle at 34% 28%, #fde68a, #f59e0b 58%, #b45309);
+  color: #3b2503; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  box-shadow: 0 0 0 8px rgba(251, 191, 36, 0.16), 0 22px 50px rgba(251, 191, 36, 0.4);
+  transition: transform 0.12s var(--ease);
+}
+.m-buzz-btn span { font-size: 42px; }
+.m-buzz-btn b { font-size: 40px; font-weight: 900; letter-spacing: 4px; }
+.m-buzz-btn:active { transform: scale(0.9); }
+.m-buzz-btn.done { background: radial-gradient(circle at 34% 28%, #d1d5db, #6b7280); color: #1f2937; box-shadow: none; }
+.m-buzz-btn.disabled { opacity: 0.45; pointer-events: none; }
+.m-buzz-rank { display: flex; flex-direction: column; gap: 8px; max-width: 300px; margin: 0 auto; }
+.mbr {
+  display: flex; align-items: center; gap: 10px; padding: 10px 15px; border-radius: 13px;
+  background: var(--panel); border: 1px solid var(--line-soft); font-size: 14px;
+  animation: pop-in 0.4s var(--ease-bounce) both;
+}
+.mbr.me { border-color: var(--gold); background: rgba(251, 191, 36, 0.16); }
+.mbr .p { width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; font-weight: 900; font-size: 12px; background: rgba(255, 255, 255, 0.12); }
+.mbr .s { margin-left: auto; color: var(--gold); font-weight: 900; }
+
+/* ---------- 转盘 ---------- */
+.m-wheel-card {
+  text-align: center; padding: 50px 24px; border-radius: 24px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+}
+.m-wheel-spin { font-size: 78px; animation: spin 2.6s linear infinite; }
+.m-wheel-card h3 { margin: 18px 0 8px; font-size: 21px; font-weight: 800; }
+.m-wheel-card p { margin: 0; font-size: 14px; color: var(--text-3); }
+.m-wheel-card.win {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(244, 114, 182, 0.14));
+  border-color: var(--gold);
+}
+.m-wheel-card.win .m-wheel-spin { animation: pop-in 0.7s var(--ease-bounce) both; }
+
+/* ---------- 底部导航 ---------- */
+/* ---------- 二级页的「返回」按钮 ---------- */
+/*
+ * 底部 tabbar（.m-tabbar）写在 #m-main 内部，切到「我的 / 排行榜 / 换座位」这些
+ * 二级页时就跟着隐藏了，所以每个二级页都得自带这个返回出口。
+ * 高度按 ≥46px 给：同学是举着手机在课堂上点，低于 44px 的触控目标容易点空。
+ */
+.m-page-back {
+  margin-top: 18px;
+  min-height: 46px;
+}
+
+.m-tabbar {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+  padding: 8px 6px; margin-top: 14px; border-radius: 20px; flex: none;
+  background: var(--panel); border: 1px solid var(--line-soft); backdrop-filter: blur(14px);
+}
+.m-tab {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 4px; border: none; background: transparent; border-radius: 14px;
+  color: var(--text-3); font-family: var(--font); font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s var(--ease); position: relative;
+}
+.m-tab i { font-size: 21px; font-style: normal; }
+.m-tab.active { color: var(--cyan); background: rgba(34, 211, 238, 0.12); }
+.m-tab .dot {
+  position: absolute; top: 5px; right: 22%; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--red); box-shadow: 0 0 8px var(--red);
+}
+
+/* ---------- 排行榜 ---------- */
+.m-rank-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.m-rank-list li {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 15px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+}
+.m-rank-list li.me { border-color: var(--cyan); background: rgba(34, 211, 238, 0.13); }
+.m-rank-list .rk {
+  width: 28px; height: 28px; border-radius: 9px; flex: none; display: grid; place-items: center;
+  font-size: 13px; font-weight: 900; background: rgba(255, 255, 255, 0.12);
+}
+.m-rank-list li:nth-child(1) .rk { background: linear-gradient(135deg, #fde68a, #f59e0b); color: #3b2503; }
+.m-rank-list li:nth-child(2) .rk { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: #1e293b; }
+.m-rank-list li:nth-child(3) .rk { background: linear-gradient(135deg, #fdba74, #c2410c); color: #2b1004; }
+.m-rank-list .a { font-size: 24px; }
+.m-rank-list .n { flex: 1; font-weight: 700; font-size: 15px; }
+.m-rank-list .n small { display: block; font-size: 11px; color: var(--text-3); font-weight: 500; }
+.m-rank-list .s { font-size: 20px; font-weight: 900; color: var(--gold); text-align: right; flex: none; }
+.m-rank-list .s em {
+  display: block; font-style: normal; font-size: 11px; font-weight: 700;
+  color: var(--text-3); margin-top: 2px;
+}
+
+/* ---------- 我的 ---------- */
+.m-me-card {
+  text-align: center; padding: 28px 20px; border-radius: 22px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+}
+.m-me-av { font-size: 66px; line-height: 1; margin-bottom: 10px; }
+.m-me-card > b { font-size: 20px; font-weight: 800; }
+.m-me-score { margin-top: 12px; }
+.m-me-score b {
+  font-size: 44px; font-weight: 900;
+  background: var(--grad-warm); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.m-me-score span { display: block; font-size: 12px; color: var(--text-3); }
+
+/* 昵称那一行：名字和「改名字」按钮并排，按钮够大才好点（≥32px 高） */
+.m-me-name-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.m-me-name-row > b { font-size: 20px; font-weight: 800; }
+.m-rename-btn {
+  padding: 6px 12px; min-height: 32px; border-radius: 99px;
+  background: transparent; border: 1px solid var(--line);
+  color: var(--text-2); font-size: 12px; cursor: pointer;
+}
+.m-rename-btn:active { background: var(--panel); color: var(--text); }
+
+/* 本次课得分 / 累计总积分并排：两个数混成一个，同学既不知道这节课表现
+   如何，也不知道整学期排第几，所以必须分开且标注清楚。 */
+.m-me-scores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.m-me-sc {
+  padding: 12px 6px; border-radius: 15px;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line-soft);
+}
+.m-me-sc b { display: block; font-size: 28px; font-weight: 900; color: var(--cyan); }
+.m-me-sc.total b {
+  background: var(--grad-warm); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.m-me-sc span { font-size: 11px; color: var(--text-3); }
+
+.m-me-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+.mms {
+  padding: 14px 8px; border-radius: 15px; text-align: center;
+  background: var(--panel); border: 1px solid var(--line-soft);
+}
+.mms b { display: block; font-size: 22px; font-weight: 900; color: var(--cyan); }
+.mms span { font-size: 11px; color: var(--text-3); }
+
+.m-me-group { margin-top: 16px; padding: 16px 18px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line-soft); }
+.m-me-group h4 { margin: 0 0 10px; font-size: 14px; color: var(--text-2); }
+.m-me-group .gmem { display: flex; flex-wrap: wrap; gap: 7px; }
+.m-me-group .gmem span { padding: 5px 12px 5px 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); font-size: 13px; }

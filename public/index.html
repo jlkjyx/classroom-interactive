@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>课堂实时互动系统</title>
+<link rel="stylesheet" href="/css/base.css">
+<style>
+  .home { position: relative; z-index: 2; min-height: 100vh; display: grid; place-items: center; padding: 40px 20px; }
+  .home-card { width: 720px; max-width: 94vw; padding: 46px 48px; text-align: center; }
+  .home-logo { width: 78px; height: 78px; margin: 0 auto 20px; border-radius: 22px; background: var(--grad-main);
+    display: grid; place-items: center; font-size: 38px; font-weight: 900; color: #05122b; box-shadow: var(--glow-cyan); }
+  .home h1 { margin: 0 0 10px; font-size: 34px; font-weight: 900; }
+  .home p.lead { margin: 0 0 30px; color: var(--text-2); font-size: 15px; line-height: 1.8; }
+  .feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 32px; text-align: left; }
+  .feat { padding: 14px 16px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line-soft); }
+  .feat b { display: block; font-size: 14px; margin-bottom: 4px; }
+  .feat span { font-size: 12px; color: var(--text-3); line-height: 1.6; }
+  .home-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .home-actions .btn { padding: 14px 30px; font-size: 16px; }
+  .home-note { margin-top: 26px; font-size: 12px; color: var(--text-3); line-height: 1.9; }
+</style>
+</head>
+<body>
+<canvas id="fx-canvas"></canvas>
+<div class="grid-deco"></div>
+<div class="home">
+  <div class="home-card card anim-fade-up">
+    <div class="home-logo">课</div>
+    <h1 class="grad-text">课堂实时互动系统</h1>
+    <p class="lead">手机扫码参与 · 大屏实时呈现 · 让每一次举手都被看见</p>
+
+    <div class="feats">
+      <div class="feat"><b>📊 实时投票</b><span>发布选择题，柱状图秒级刷新</span></div>
+      <div class="feat"><b>💬 词云弹幕</b><span>相同观点自动聚合，弹幕飞入大屏</span></div>
+      <div class="feat"><b>🎯 提问转盘</b><span>随机点名，可只抽前排</span></div>
+      <div class="feat"><b>⚡ 抢答擂台</b><span>前三名自动计分</span></div>
+      <div class="feat"><b>💺 座位激励</b><span>前排就坐自动加分</span></div>
+      <div class="feat"><b>🏆 积分体系</b><span>一键导出平时分 CSV</span></div>
+    </div>
+
+    <div class="home-actions">
+      <a class="btn btn-primary btn-lg" href="/c">🎛 进入教师控制端</a>
+      <a class="btn btn-lg" href="/w">📺 打开大屏</a>
+    </div>
+
+    <p class="home-note">
+      学生无需安装 App，扫码即可参与<br>
+      建议：控制端放在电脑，大屏窗口拖到投影并按 F11 全屏
+    </p>
+  </div>
+</div>
+<script type="module">
+  import { StarField } from '/js/common.js';
+  new StarField(document.getElementById('fx-canvas'), { count: 60 });
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+# ⚠️ 早期「1Panel 自带 OpenResty 反代 + 域名证书」路线的编排，现仅作参考。
+#    当前部署请用 ../docker/docker-compose.run.yml（外部 WAF 回源路线，先构建镜像再起）。
+#
+#    ⚠️ 1Panel 创建编排时会自己预拉取 image: 声明的镜像（源码
+#    agent/utils/compose/compose.go），pull_policy 对它无效。
+#    所以本文件做成纯 image、无 build：先构建好 classroom-interactive:1.0.0，
+#    再粘贴本文件建编排，创建时不要勾「强制拉取镜像」。
+services:
+  app:
+    image: classroom-interactive:1.0.0
+    container_name: classroom-app
+    restart: unless-stopped
+    ports:
+      # 先用 3000 直连验证容器是否正常；域名反代配通后，建议改成
+      # "127.0.0.1:3000:3000"，让服务只经 1Panel 的 OpenResty 对外暴露。
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      TZ: Asia/Shanghai
+      # ↓↓↓ 唯一必须改的一行：学生扫码后访问的地址，决定二维码内容。
+      #    没有域名就先留空（系统按访问 Host 自动推断），有域名务必填全（含 https://）。
+      PUBLIC_BASE: ""
+      # 生产环境建议保持 1：关闭 /api/rooms 全量房间列表接口
+      DISABLE_ROOM_LIST: "1"
+    volumes:
+      # 用命名卷而不是 ./data 目录挂载，是为了绕开一个必踩的坑：
+      # 容器以 node(uid 1000) 运行，而挂载出来的宿主目录通常是 root 建的，
+      # 权限 755 —— 建子目录直接 EACCES，服务启动即崩。
+      # 命名卷会继承镜像内目录的属主，开箱即用，不用手动 chown。
+      - classroom-data:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  classroom-data:

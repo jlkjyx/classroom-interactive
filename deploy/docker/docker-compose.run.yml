@@ -1,0 +1,83 @@
+# ============================================================
+#  1Panel 专用编排（主方案）：先构建镜像，再创建这个编排
+# ============================================================
+#  ⚠️ 1Panel 创建编排时会自己先做一步「预拉取」：逐个 docker pull 编排里
+#     image: 声明的镜像。pull_policy 对这一步完全无效（1Panel 源码
+#     agent/utils/compose/compose.go 的 UpWithTask → PullComposeImages）。
+#     本地已存在的镜像才会被跳过；预拉取失败且本地没有 → 任务直接中止，
+#     报「error from registry: denied」。
+#
+#  所以本文件刻意做成「没有 build 段、只有 image」：
+#  只要镜像先构建好，1Panel 预拉取跳过 → compose up -d 直接用本地镜像，
+#  全程不碰 Docker Hub。
+#
+#  用法（顺序不能反）：
+#    1) 构建镜像（二选一）：
+#       · 1Panel：容器 → 镜像 → 构建镜像
+#           Dockerfile    /opt/classroom-interactive/Dockerfile
+#           上下文目录    /opt/classroom-interactive
+#           镜像名称      classroom-interactive:1.0.0
+#       · 或 SSH：docker build -t classroom-interactive:1.0.0 /opt/classroom-interactive
+#    2) 确认镜像在本地：
+#       docker images | grep classroom-interactive
+#    3) 1Panel：容器 → 编排 → 创建编排，把本文件整段粘贴进去，
+#       创建弹窗里【不要勾选「强制拉取镜像」】
+#       （勾了就会无条件 docker pull，本地有镜像也照样失败）
+# ============================================================
+
+services:
+  app:
+    # 没有 build 段：Compose 不会尝试构建，只认本地已有的这个镜像。
+    # 不写 pull_policy：Compose 对本地已存在的镜像默认不拉取，
+    # 兼容各版本（老版本不认 pull_policy 字段会直接报错）。
+    image: classroom-interactive:1.0.2
+
+    container_name: classroom-app
+    restart: unless-stopped
+
+    ports:
+      # 若 WAF 与本项目同机，改成 - "127.0.0.1:3000:3000"
+      - "3000:3000"
+
+    environment:
+      PORT: "3000"
+      TZ: Asia/Shanghai
+
+      # 留空 = 按 X-Forwarded-Host / Host 自动推断。
+      # 部署后看 https://你的域名/healthz 的 qrBase 字段，不是你的 https 域名
+      # 就填 PUBLIC_BASE: "https://你的域名"（改环境变量重启即可，不用重建镜像）。
+      PUBLIC_BASE: ""
+
+      DISABLE_ROOM_LIST: "1"
+
+    volumes:
+      # 必须用命名卷。挂宿主目录（如 /opt/classroom-interactive/data）会因
+      # 容器以 node(uid 1000) 运行而权限不足，启动时直接 EACCES 崩溃。
+      - classroom-data:/app/data
+
+      # 【可选】源码热更新：把 server/、public/ 以只读方式挂进容器，
+      # 之后改代码（如 server/index.js、public/js/control.js）只需覆盖宿主机
+      # 文件 + `docker restart classroom-app`，不必重建镜像。
+      #   · 路径务必改成你实际的解压目录（下面默认 /opt/classroom-interactive）。
+      #   · 挂载的宿主目录必须完整（server/、public/ 都在），否则容器里
+      #     对应目录会被空目录顶替、服务起不来——覆盖解压不会补齐缺失子目录，
+      #     这一点之前踩过。
+      #   · 不需要这个能力时，把下面两行整段删掉即可，镜像仍可独立运行。
+      - /opt/classroom-interactive/server:/app/server:ro
+      - /opt/classroom-interactive/public:/app/public:ro
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  classroom-data:

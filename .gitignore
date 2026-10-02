@@ -1,0 +1,15 @@
+node_modules/
+data/rooms/*.json
+shots/
+test/step.txt
+test/demo-room.json
+test/*.log
+test/_*.mjs
+work/
+deploy/*.zip
+deploy/新建文件夹/
+.pack-tmp/
+*.log
+.DS_Store
+.env
+certs/

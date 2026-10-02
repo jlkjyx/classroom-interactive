@@ -1,0 +1,37 @@
+{
+  "name": "classroom-interactive",
+  "version": "1.0.0",
+  "private": true,
+  "description": "课堂实时互动系统：控制端 + 大屏呈现端 + 手机扫码参与端",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node test/e2e.mjs",
+    "demo": "node test/demo.mjs",
+    "verify": "node test/verify-visual.mjs",
+    "smoke": "node test/smoke-pages.mjs",
+    "control": "node test/verify-control.mjs",
+    "restart": "node test/verify-restart.mjs",
+    "mobile": "node test/verify-mobile.mjs",
+    "load": "node test/verify-load.mjs",
+    "shoot": "node test/shoot.mjs",
+    "wordblock": "node test/verify-wordblock.mjs",
+    "loginlock": "node test/verify-login-lock.mjs",
+    "legacy": "node test/verify-legacy-snapshot.mjs",
+    "pack": "node scripts/pack.mjs"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^24.0.0",
+    "socket.io-client": "^4.8.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a1030">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>课堂互动</title>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/mobile.css">
+</head>
+<body>
+<div class="m-bg"></div>
+
+<!-- ============ 加入页 ============ -->
+<div id="m-join" class="m-page active">
+  <div class="m-join-wrap">
+    <div class="m-logo">课</div>
+    <h1 class="grad-text">加入课堂</h1>
+    <p class="m-join-sub" id="m-room-title">—</p>
+
+    <div class="m-avatar-pick">
+      <div class="m-avatar-big" id="m-my-avatar">🦊</div>
+      <button class="btn btn-ghost" id="m-shuffle" style="margin-top:10px">🎲 换一个</button>
+    </div>
+
+    <label class="field">
+      <span>你的昵称</span>
+      <input id="m-nickname" placeholder="起个好认的名字吧" maxlength="12">
+    </label>
+
+    <button class="btn btn-primary btn-lg btn-block" id="m-join-btn">进入课堂</button>
+    <p class="m-tip">昵称会显示在大屏上，建议用真名或常用昵称</p>
+  </div>
+</div>
+
+<!-- ============ 选座页 ============ -->
+<div id="m-seat" class="m-page">
+  <div class="m-page-head">
+    <h2>💺 选个座位</h2>
+    <p>前排就坐有 <b>+3 分</b> 奖励，也更容易被老师看到</p>
+  </div>
+  <div class="m-seat-area">
+    <div class="m-podium">讲台</div>
+    <div class="m-seat-grid" id="m-seat-grid"></div>
+  </div>
+  <div class="m-seat-legend">
+    <span><i class="lg front"></i>前排（有加分）</span>
+    <span><i class="lg taken"></i>已有人</span>
+    <span><i class="lg mine"></i>我的座位</span>
+  </div>
+  <button class="btn btn-primary btn-lg btn-block" id="m-seat-skip" style="margin-top:18px">先不坐，直接进去 →</button>
+</div>
+
+<!-- ============ 主界面 ============ -->
+<div id="m-main" class="m-page">
+  <header class="m-top">
+    <div class="m-top-l">
+      <span class="m-av" id="m-top-avatar">🦊</span>
+      <div>
+        <b id="m-top-name">—</b>
+        <span id="m-top-seat">未选座</span>
+      </div>
+    </div>
+    <div class="m-top-r">
+      <div class="m-score"><b id="m-score">0</b><span id="m-score-label">本次分</span></div>
+    </div>
+  </header>
+
+  <div class="m-content" id="m-content">
+
+    <!-- 无活动 -->
+    <section class="m-view active" id="mv-idle">
+      <div class="m-idle-card">
+        <div class="m-idle-icon">⏳</div>
+        <h3>等待老师开始</h3>
+        <p id="m-idle-hint">老师发布活动后会实时出现在这里</p>
+      </div>
+      <div class="m-quick">
+        <button class="m-quick-btn" id="m-hand-btn">
+          <i>✋</i><b>举手</b><span>被点名 +2</span>
+        </button>
+        <button class="m-quick-btn" id="m-cheer-btn">
+          <i>👏</i><b>喝彩</b><span>给课堂加点料</span>
+        </button>
+      </div>
+      <div class="m-rank-mini" id="m-rank-mini"></div>
+    </section>
+
+    <!-- 投票 -->
+    <section class="m-view" id="mv-poll">
+      <div class="m-q-badge" id="m-poll-badge">投票</div>
+      <h3 class="m-q" id="m-poll-q">—</h3>
+      <div class="m-options" id="m-options"></div>
+      <p class="m-hint" id="m-poll-hint">选择后立即同步到大屏</p>
+      <div class="m-answer-ref hidden" id="m-poll-ref"></div>
+    </section>
+
+    <!-- 简答题（小测 / 测验） -->
+    <section class="m-view" id="mv-text">
+      <div class="m-q-badge" id="m-text-badge">✍️ 简答题</div>
+      <h3 class="m-q" id="m-text-q">—</h3>
+      <div class="m-word-input">
+        <input id="m-text-answer" placeholder="输入你的答案…" maxlength="120">
+        <button class="btn btn-primary" id="m-text-send">提交</button>
+      </div>
+      <p class="m-hint" id="m-text-hint">提交后会显示在大屏答案墙上</p>
+      <div class="m-answer-ref hidden" id="m-text-ref"></div>
+    </section>
+
+    <!-- 词云 / 弹幕 -->
+    <section class="m-view" id="mv-word">
+      <div class="m-q-badge">💬 说说你的想法</div>
+      <h3 class="m-q" id="m-word-prompt">—</h3>
+      <div class="m-word-input">
+        <input id="m-word-text" placeholder="输入你的想法…" maxlength="20">
+        <button class="btn btn-primary" id="m-word-send">发送</button>
+      </div>
+      <div class="m-word-tags" id="m-word-tags"></div>
+      <div class="m-my-words" id="m-my-words"></div>
+      <p class="m-hint">发送后会变成弹幕飞上大屏 ✨</p>
+    </section>
+
+    <!-- 抢答 -->
+    <section class="m-view" id="mv-buzz">
+      <div class="m-buzz-area">
+        <h3 class="m-q" id="m-buzz-q">抢答！</h3>
+        <button class="m-buzz-btn" id="m-buzz-btn">
+          <span>⚡</span>
+          <b>抢！</b>
+        </button>
+        <div class="m-buzz-rank" id="m-buzz-rank"></div>
+        <div class="m-answer-ref hidden" id="m-buzz-ref"></div>
+      </div>
+    </section>
+
+    <!-- 转盘 -->
+    <section class="m-view" id="mv-wheel">
+      <div class="m-wheel-card">
+        <div class="m-wheel-spin">🎡</div>
+        <h3 id="m-wheel-title">提问大转盘</h3>
+        <p id="m-wheel-status">老师在转动转盘…</p>
+      </div>
+    </section>
+
+  </div>
+
+  <nav class="m-tabbar">
+    <button class="m-tab active" data-mtab="act"><i>🎯</i><span>活动</span></button>
+    <button class="m-tab" data-mtab="seat"><i>💺</i><span>座位</span></button>
+    <button class="m-tab" data-mtab="rank"><i>🏆</i><span>排行</span></button>
+    <button class="m-tab" data-mtab="me"><i>🙋</i><span>我的</span></button>
+  </nav>
+</div>
+
+<!-- ============ 座位重选（主界面内） ============ -->
+<div id="m-seat2" class="m-page">
+  <div class="m-page-head">
+    <h2>💺 换个座位</h2>
+    <p>点击空位即可换座，前排仍有 +3 分</p>
+  </div>
+  <div class="m-seat-area">
+    <div class="m-podium">讲台</div>
+    <div class="m-seat-grid" id="m-seat-grid2"></div>
+  </div>
+  <button class="btn btn-block m-page-back" id="m-seat2-back">← 返回</button>
+</div>
+
+<!-- ============ 排行榜 ============ -->
+<div id="m-rank" class="m-page">
+  <div class="m-page-head"><h2>🏆 积分榜</h2><p>参与越多，积分越高</p></div>
+  <ol class="m-rank-list" id="m-rank-list"></ol>
+  <button class="btn btn-block m-page-back" id="m-rank-back">← 返回</button>
+</div>
+
+<!-- ============ 我的 ============ -->
+<div id="m-me" class="m-page">
+  <div class="m-page-head"><h2>🙋 我的</h2></div>
+  <div class="m-me-card">
+    <div class="m-me-av" id="m-me-av">🦊</div>
+    <div class="m-me-name-row">
+      <b id="m-me-name">—</b>
+      <button class="m-rename-btn" id="m-rename" type="button">✏️ 改名字</button>
+    </div>
+    <div class="m-me-scores">
+      <div class="m-me-sc">
+        <b id="m-me-session">0</b><span>本次课得分</span>
+      </div>
+      <div class="m-me-sc total">
+        <b id="m-me-total">0</b><span>累计总积分</span>
+      </div>
+    </div>
+  </div>
+  <div class="m-me-stats" id="m-me-stats"></div>
+  <div class="m-me-group" id="m-me-group"></div>
+  <!-- 「我的」是从底部 tab 切进来的，而 tabbar 写在 #m-main 里，切过来就跟着隐藏了，
+       所以这里必须给一个返回出口，否则同学只剩「离开课堂」一条路（排行榜/换座位页同理）。
+       返回放在离开之前：正经操作在上，破坏性操作留在最下面。 -->
+  <button class="btn btn-block m-page-back" id="m-me-back">← 返回</button>
+  <button class="btn btn-danger btn-block" id="m-leave" style="margin-top:10px">离开课堂</button>
+  <p class="m-tip">离开后仍可扫码回来，积分会保留</p>
+</div>
+
+<div class="toast-wrap" id="m-toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="/js/mobile.js"></script>
+</body>
+</html>
