@@ -509,3 +509,15 @@ npm run control   # 教师控制端点击是否真的生效（137 项）
 
 想直接看效果，用 `node test/shoot.mjs`（需先跑 `npm run demo`），  
 结果在 `shots/大屏-<状态>.png`，可直接插进 PPT。
+
+---
+
+## 许可证
+
+本项目采用 [MIT License](LICENSE) 开源，可自由使用、修改、分发（含商业用途），
+只需保留原始版权声明与许可声明。
+
+```
+Copyright (c) 2026 jlkjyx
+```
+
